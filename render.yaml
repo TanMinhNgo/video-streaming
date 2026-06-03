@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: video-streaming-backend
+    runtime: node
+    rootDir: backend
+    buildCommand: npm ci && npm run build:render
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: NODE_ENV
+        value: production
