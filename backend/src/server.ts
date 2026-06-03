@@ -1,11 +1,11 @@
 import mongoose from "mongoose";
-import { app } from "./app.js";
-import { connectDb } from "./config/db.js";
-import { env } from "./config/env.js";
-import { logger } from "./config/logger.js";
-import { connectRedis, disconnectRedis } from "./config/redis.js";
-import { initSentry } from "./config/sentry.js";
-import { startTrackingBatch, stopTrackingBatch } from "./middleware/trackingBatch.js";
+import { app } from "./app.ts";
+import { connectDb } from "./config/db.ts";
+import { env } from "./config/env.ts";
+import { logger } from "./config/logger.ts";
+import { connectRedis, disconnectRedis } from "./config/redis.ts";
+import { initSentry } from "./config/sentry.ts";
+import { startTrackingBatch, stopTrackingBatch } from "./middleware/trackingBatch.ts";
 
 initSentry();
 
