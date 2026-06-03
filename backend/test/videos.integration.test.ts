@@ -19,12 +19,14 @@ vi.mock("@clerk/express", () => ({
   },
 }));
 
+const mockImageKit = {
+  deleteFile: vi.fn(async () => undefined),
+  url: vi.fn(() => "https://example.com/stream.mp4"),
+  getAuthenticationParameters: vi.fn(() => ({ token: "t", expire: 1, signature: "s" })),
+};
+
 vi.mock("../src/config/imagekit.js", () => ({
-  imagekit: {
-    deleteFile: vi.fn(async () => undefined),
-    url: vi.fn(() => "https://example.com/stream.mp4"),
-    getAuthenticationParameters: vi.fn(() => ({ token: "t", expire: 1, signature: "s" })),
-  },
+  getImageKit: () => mockImageKit,
 }));
 
 let mongod: MongoMemoryServer;
@@ -96,4 +98,3 @@ describe("Videos integration", () => {
     expect(res.status).toBe(401);
   });
 });
-

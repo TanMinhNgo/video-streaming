@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import { cacheDel, cacheGet, cacheSet } from "../../config/redis.js";
-import { imagekit } from "../../config/imagekit.js";
+import { getImageKit } from "../../config/imagekit.js";
 import { AnalyticsEvent } from "../analytics/analyticsEvent.schema.js";
 import { WatchHistory } from "../analytics/watchHistory.schema.js";
 import { Comment } from "../comments/comment.schema.js";
@@ -54,7 +54,7 @@ export const updateVideo = async (id: string, uploaderId: string, payload: Recor
 export const deleteVideo = async (id: string, uploaderId: string) => {
   const video = await Video.findOne({ _id: id, uploaderId });
   if (!video) return null;
-  if (video.imageKitFileId) await imagekit.deleteFile(video.imageKitFileId).catch(() => undefined);
+  if (video.imageKitFileId) await getImageKit().deleteFile(video.imageKitFileId).catch(() => undefined);
   video.status = "deleted";
   await video.save();
   await cacheDel(`video:${id}`);
@@ -62,7 +62,7 @@ export const deleteVideo = async (id: string, uploaderId: string) => {
 };
 
 export const getStreamUrl = (path: string, isPrivate = false) =>
-  imagekit.url({ path, transformation: [{ format: "mp4" }], ...(isPrivate ? { signed: true, expireSeconds: 3600 } : {}) });
+  getImageKit().url({ path, transformation: [{ format: "mp4" }], ...(isPrivate ? { signed: true, expireSeconds: 3600 } : {}) });
 
 export const listRecommendations = async (clerkId?: string) => {
   if (!clerkId) {
