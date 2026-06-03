@@ -1,6 +1,22 @@
 import request from "supertest";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 
+vi.mock("@clerk/express", () => ({
+  clerkMiddleware: () => (req: any, _res: any, next: any) => {
+    const auth = req.headers.authorization as string | undefined;
+    const token = auth?.startsWith("Bearer ") ? auth.slice("Bearer ".length) : undefined;
+    if (token) req.auth = { userId: token };
+    next();
+  },
+  requireAuth: () => (req: any, res: any, next: any) => {
+    if (!req.auth?.userId) {
+      res.status(401).json({ success: false, error: "Unauthorized" });
+      return;
+    }
+    next();
+  },
+}));
+
 vi.mock("../src/modules/videos/video.service.js", () => ({
   createVideo: vi.fn(),
   listPublicVideos: vi.fn(async () => ({
@@ -78,4 +94,3 @@ describe("Backend smoke tests", () => {
     expect(res.body.data.inserted).toBe(1);
   });
 });
-

@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
 
-dotenv.config();
+dotenv.config({ quiet: process.env.NODE_ENV === "test" || process.env.CI === "true" });
 
 export const env = {
   nodeEnv: process.env.NODE_ENV ?? "development",

@@ -6,6 +6,22 @@ import { User } from "../src/modules/users/user.schema.js";
 import { Video } from "../src/modules/videos/video.schema.js";
 import { WatchHistory } from "../src/modules/analytics/watchHistory.schema.js";
 
+vi.mock("@clerk/express", () => ({
+  clerkMiddleware: () => (req: any, _res: any, next: any) => {
+    const auth = req.headers.authorization as string | undefined;
+    const token = auth?.startsWith("Bearer ") ? auth.slice("Bearer ".length) : undefined;
+    if (token) req.auth = { userId: token };
+    next();
+  },
+  requireAuth: () => (req: any, res: any, next: any) => {
+    if (!req.auth?.userId) {
+      res.status(401).json({ success: false, error: "Unauthorized" });
+      return;
+    }
+    next();
+  },
+}));
+
 vi.mock("svix", () => ({
   Webhook: class {
     constructor(_secret: string) {}
@@ -107,4 +123,3 @@ describe("Webhook + Analytics integration", () => {
     expect(history?.watchDuration).toBe(120);
   });
 });
-
