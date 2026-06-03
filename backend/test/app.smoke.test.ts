@@ -53,7 +53,7 @@ let app: any;
 
 beforeAll(async () => {
   process.env.CLERK_WEBHOOK_SECRET = "whsec_test";
-  const mod = await import("../src/app.js");
+  const mod = await import("../src/app.ts");
   app = mod.app;
 });
 

@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
 import { z } from "zod";
-import { AnalyticsEvent } from "./analyticsEvent.schema.js";
-import { WatchHistory } from "./watchHistory.schema.js";
-import { User } from "../users/user.schema.js";
-import { Video } from "../videos/video.schema.js";
+import { AnalyticsEvent } from "./analyticsEvent.schema.ts";
+import { WatchHistory } from "./watchHistory.schema.ts";
+import { User } from "../users/user.schema.ts";
+import { Video } from "../videos/video.schema.ts";
 
 const eventSchema = z.array(
   z.object({

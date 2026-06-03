@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { AnalyticsEvent } from "../modules/analytics/analyticsEvent.schema.js";
+import { AnalyticsEvent } from "../modules/analytics/analyticsEvent.schema.ts";
 
 type BufferedEvent = {
   sessionId: string;

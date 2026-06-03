@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { requireAuth } from "@clerk/express";
-import { asyncHandler } from "../../utils/asyncHandler.js";
+import { asyncHandler } from "../../utils/asyncHandler.ts";
 import {
   getComments,
   getRecommendations,
@@ -13,7 +13,7 @@ import {
   postVideo,
   putVideo,
   removeVideo,
-} from "./video.controller.js";
+} from "./video.controller.ts";
 
 export const videoRouter = Router();
 

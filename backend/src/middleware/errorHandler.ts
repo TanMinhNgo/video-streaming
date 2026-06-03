@@ -1,6 +1,6 @@
 import * as Sentry from "@sentry/node";
 import { NextFunction, Request, Response } from "express";
-import { logger } from "../config/logger.js";
+import { logger } from "../config/logger.ts";
 
 export const errorHandler = (
   err: unknown,

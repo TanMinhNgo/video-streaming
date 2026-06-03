@@ -1,5 +1,5 @@
 import ImageKit from "imagekit";
-import { env } from "./env.js";
+import { env } from "./env.ts";
 
 let imagekitInstance: ImageKit | null = null;
 

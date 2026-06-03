@@ -1,5 +1,5 @@
 import * as Sentry from "@sentry/node";
-import { env } from "./env.js";
+import { env } from "./env.ts";
 
 export const initSentry = () => {
   if (!process.env.SENTRY_DSN) {

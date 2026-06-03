@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { requireAuth } from "@clerk/express";
-import { asyncHandler } from "../../utils/asyncHandler.js";
-import { getMe, getPublicProfile, toggleSubscribe, updateMe } from "./user.controller.js";
+import { asyncHandler } from "../../utils/asyncHandler.ts";
+import { getMe, getPublicProfile, toggleSubscribe, updateMe } from "./user.controller.ts";
 
 export const userRouter = Router();
 

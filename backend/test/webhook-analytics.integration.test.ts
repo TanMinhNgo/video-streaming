@@ -2,9 +2,9 @@ import mongoose from "mongoose";
 import request from "supertest";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { MongoMemoryServer } from "mongodb-memory-server";
-import { User } from "../src/modules/users/user.schema.js";
-import { Video } from "../src/modules/videos/video.schema.js";
-import { WatchHistory } from "../src/modules/analytics/watchHistory.schema.js";
+import { User } from "../src/modules/users/user.schema.ts";
+import { Video } from "../src/modules/videos/video.schema.ts";
+import { WatchHistory } from "../src/modules/analytics/watchHistory.schema.ts";
 
 vi.mock("@clerk/express", () => ({
   clerkMiddleware: () => (req: any, _res: any, next: any) => {
@@ -38,7 +38,7 @@ beforeAll(async () => {
   process.env.CLERK_WEBHOOK_SECRET = "whsec_test";
   mongod = await MongoMemoryServer.create();
   await mongoose.connect(mongod.getUri(), { dbName: "video-streaming-integration" });
-  const mod = await import("../src/app.js");
+  const mod = await import("../src/app.ts");
   app = mod.app;
 });
 

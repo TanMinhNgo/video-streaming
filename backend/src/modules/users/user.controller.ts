@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { z } from "zod";
-import { cacheDel, cacheGet, cacheSet } from "../../config/redis.js";
-import { User } from "./user.schema.js";
+import { cacheDel, cacheGet, cacheSet } from "../../config/redis.ts";
+import { User } from "./user.schema.ts";
 
 const updateMeSchema = z.object({
   username: z.string().min(1).optional(),

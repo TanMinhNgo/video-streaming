@@ -1,4 +1,4 @@
-import { User } from "./user.schema.js";
+import { User } from "./user.schema.ts";
 
 interface ClerkUserPayload {
   id: string;

@@ -1,6 +1,6 @@
 import { Redis } from "ioredis";
-import { env } from "./env.js";
-import { logger } from "./logger.js";
+import { env } from "./env.ts";
+import { logger } from "./logger.ts";
 
 export const redis = env.redisUrl ? new Redis(env.redisUrl, { lazyConnect: true, maxRetriesPerRequest: 1 }) : null;
 

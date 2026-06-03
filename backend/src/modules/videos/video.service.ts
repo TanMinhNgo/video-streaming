@@ -1,12 +1,12 @@
 import mongoose from "mongoose";
-import { cacheDel, cacheGet, cacheSet } from "../../config/redis.js";
-import { getImageKit } from "../../config/imagekit.js";
-import { AnalyticsEvent } from "../analytics/analyticsEvent.schema.js";
-import { WatchHistory } from "../analytics/watchHistory.schema.js";
-import { Comment } from "../comments/comment.schema.js";
-import { Interaction } from "../interactions/interaction.schema.js";
-import { User } from "../users/user.schema.js";
-import { Video } from "./video.schema.js";
+import { cacheDel, cacheGet, cacheSet } from "../../config/redis.ts";
+import { getImageKit } from "../../config/imagekit.ts";
+import { AnalyticsEvent } from "../analytics/analyticsEvent.schema.ts";
+import { WatchHistory } from "../analytics/watchHistory.schema.ts";
+import { Comment } from "../comments/comment.schema.ts";
+import { Interaction } from "../interactions/interaction.schema.ts";
+import { User } from "../users/user.schema.ts";
+import { Video } from "./video.schema.ts";
 
 export const createVideo = async (payload: Record<string, unknown>) => Video.create(payload);
 

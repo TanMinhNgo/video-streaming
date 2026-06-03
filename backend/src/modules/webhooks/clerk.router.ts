@@ -1,8 +1,8 @@
 import { Router } from "express";
 import { Webhook } from "svix";
-import { env } from "../../config/env.js";
-import { asyncHandler } from "../../utils/asyncHandler.js";
-import { deleteUserFromClerk, upsertUserFromClerk } from "../users/user.service.js";
+import { env } from "../../config/env.ts";
+import { asyncHandler } from "../../utils/asyncHandler.ts";
+import { deleteUserFromClerk, upsertUserFromClerk } from "../users/user.service.ts";
 
 export const clerkWebhookRouter = Router();
 

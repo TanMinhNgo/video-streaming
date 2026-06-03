@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { requireAuth } from "@clerk/express";
-import { asyncHandler } from "../../utils/asyncHandler.js";
-import { getAnalyticsDashboard, getVideoAnalytics, postAnalyticsEvents } from "./analytics.controller.js";
+import { asyncHandler } from "../../utils/asyncHandler.ts";
+import { getAnalyticsDashboard, getVideoAnalytics, postAnalyticsEvents } from "./analytics.controller.ts";
 
 export const analyticsRouter = Router();
 

@@ -13,7 +13,7 @@ import {
   searchVideos,
   toggleLike,
   updateVideo,
-} from "./video.service.js";
+} from "./video.service.ts";
 
 const createVideoSchema = z.object({
   title: z.string().min(1),

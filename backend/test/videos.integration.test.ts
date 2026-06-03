@@ -37,7 +37,7 @@ const authHeader = { Authorization: "Bearer test-user" };
 beforeAll(async () => {
   mongod = await MongoMemoryServer.create();
   await mongoose.connect(mongod.getUri(), { dbName: "video-streaming-test" });
-  const mod = await import("../src/app.js");
+  const mod = await import("../src/app.ts");
   app = mod.app;
 });
 
