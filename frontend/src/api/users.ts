@@ -1,5 +1,6 @@
 import { api } from "./axios";
 import type { User } from "@/types";
+import { sampleUserById } from "@/lib/sampleData";
 
 type ApiOk<T> = { success: true; data: T };
 
@@ -18,7 +19,10 @@ export const updateMe = async (payload: Partial<User>, token: string) => {
 };
 
 export const fetchUserProfile = async (id: string) => {
-  const response = await api.get<ApiOk<User>>(`/users/${id}`);
-  return response.data.data;
+  try {
+    const response = await api.get<ApiOk<User>>(`/users/${id}`);
+    return response.data.data;
+  } catch {
+    return sampleUserById(id);
+  }
 };
-

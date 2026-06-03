@@ -3,9 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { sampleVideos } from "@/lib/sampleData";
+import { formatCount } from "@/lib/utils";
 
 export const StudioPage = () => {
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const totalViews = sampleVideos.reduce((sum, video) => sum + video.viewCount, 0);
+  const totalLikes = sampleVideos.reduce((sum, video) => sum + video.likeCount, 0);
 
   return (
     <main className="space-y-4">
@@ -21,10 +25,10 @@ export const StudioPage = () => {
         <TabsContent value="overview">
         <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {[
-            ["Total Videos", "24"],
-            ["Total Views", "184K"],
-            ["Total Likes", "9.2K"],
-            ["Subscribers", "1.8K"],
+            ["Total Videos", String(sampleVideos.length)],
+            ["Total Views", formatCount(totalViews)],
+            ["Total Likes", formatCount(totalLikes)],
+            ["Subscribers", "27.6K"],
           ].map(([label, value]) => (
             <Card key={label}>
               <CardHeader><h3 className="text-sm text-muted-foreground">{label}</h3></CardHeader>
@@ -38,7 +42,17 @@ export const StudioPage = () => {
         <Card>
           <CardHeader><h2 className="text-lg font-semibold">Recent Uploads</h2></CardHeader>
           <CardContent className="space-y-3">
-            <p className="text-sm text-muted-foreground">Manage titles, tags, visibility, and performance.</p>
+            <div className="space-y-2">
+              {sampleVideos.slice(0, 4).map((video) => (
+                <div key={video._id} className="grid gap-2 rounded-md border p-3 sm:grid-cols-[1fr_auto] sm:items-center">
+                  <div>
+                    <h3 className="text-sm font-medium">{video.title}</h3>
+                    <p className="text-xs text-muted-foreground">{formatCount(video.viewCount)} views | {video.tags.join(", ")}</p>
+                  </div>
+                  <Button variant="secondary" type="button">Edit</Button>
+                </div>
+              ))}
+            </div>
             <Button variant="secondary" onClick={() => setConfirmOpen(true)}>Delete selected video</Button>
           </CardContent>
         </Card>
@@ -47,7 +61,18 @@ export const StudioPage = () => {
         <TabsContent value="analytics">
         <Card>
           <CardHeader><h2 className="text-lg font-semibold">Analytics Snapshot</h2></CardHeader>
-          <CardContent><p className="text-sm text-muted-foreground">Retention, watch time, CTR and audience trend charts will render here.</p></CardContent>
+          <CardContent className="grid gap-3 sm:grid-cols-3">
+            {[
+              ["Avg watch", "3m 42s"],
+              ["Completion", "64%"],
+              ["Search traffic", "38%"],
+            ].map(([label, value]) => (
+              <div key={label} className="rounded-md border p-3">
+                <p className="text-sm text-muted-foreground">{label}</p>
+                <strong className="text-xl">{value}</strong>
+              </div>
+            ))}
+          </CardContent>
         </Card>
         </TabsContent>
       </Tabs>

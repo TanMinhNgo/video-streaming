@@ -11,22 +11,24 @@ export const VideoPlayer = ({ video, streamUrl }: { video: Video; streamUrl?: st
   const setVolume = usePlayerStore((s) => s.setVolume);
 
   return (
-    <video
-      ref={ref}
-      controls
-      preload="metadata"
-      style={{ width: "100%", maxHeight: 540, background: "#000" }}
-      src={src}
-      onPlay={() => track("video_play")}
-      onPause={() => track("video_pause")}
-      onEnded={() => track("video_ended")}
-      onSeeked={() => track("video_seek", { currentTime: ref.current?.currentTime })}
-      onVolumeChange={() => {
-        if (typeof ref.current?.volume === "number") setVolume(ref.current.volume);
-      }}
-      onLoadedMetadata={() => {
-        if (ref.current) ref.current.volume = volume;
-      }}
-    />
+    <div className="overflow-hidden rounded-lg border bg-black shadow-sm">
+      <video
+        ref={ref}
+        controls
+        preload="metadata"
+        className="aspect-video max-h-[540px] w-full bg-black object-contain"
+        src={src}
+        onPlay={() => track("video_play")}
+        onPause={() => track("video_pause")}
+        onEnded={() => track("video_ended")}
+        onSeeked={() => track("video_seek", { currentTime: ref.current?.currentTime })}
+        onVolumeChange={() => {
+          if (typeof ref.current?.volume === "number") setVolume(ref.current.volume);
+        }}
+        onLoadedMetadata={() => {
+          if (ref.current) ref.current.volume = volume;
+        }}
+      />
+    </div>
   );
 };

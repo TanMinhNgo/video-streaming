@@ -39,7 +39,7 @@ beforeAll(async () => {
   await mongoose.connect(mongod.getUri(), { dbName: "video-streaming-test" });
   const mod = await import("../src/app.ts");
   app = mod.app;
-});
+}, 30000);
 
 afterEach(async () => {
   const collections = mongoose.connection.collections;

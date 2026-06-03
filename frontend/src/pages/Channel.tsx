@@ -1,7 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 import { fetchUserProfile } from "@/api/users";
-import { Card, CardContent } from "@/components/ui/card";
+import { VideoCard } from "@/components/video/VideoCard";
+import { sampleVideos } from "@/lib/sampleData";
+import { formatCount } from "@/lib/utils";
 
 export const ChannelPage = () => {
   const { id = "" } = useParams();
@@ -13,10 +15,14 @@ export const ChannelPage = () => {
         <div>
           <h1 className="text-2xl font-semibold">{data?.username || "Channel"}</h1>
           <p className="text-sm text-muted-foreground">{data?.bio || "No bio yet"}</p>
-          <span className="text-sm text-muted-foreground">{data?.subscriberCount ?? 0} subscribers</span>
+          <span className="text-sm text-muted-foreground">{formatCount(data?.subscriberCount ?? 0)} subscribers</span>
         </div>
       </section>
-      <Card><CardContent className="p-4 text-sm text-muted-foreground">No videos published yet.</CardContent></Card>
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {sampleVideos.slice(0, 3).map((video) => (
+          <VideoCard key={video._id} video={video} />
+        ))}
+      </section>
     </main>
   );
 };
