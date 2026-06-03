@@ -23,4 +23,4 @@ COPY --from=build /app/dist ./dist
 RUN mkdir -p /app/logs && chown -R app:app /app
 USER app
 EXPOSE 5000
-CMD ["node", "dist/src/server.js"]
+CMD ["node", "dist/server.js"]
