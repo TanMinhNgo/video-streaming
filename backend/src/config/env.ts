@@ -10,6 +10,7 @@ export const env = {
   imagekitPublicKey: process.env.IMAGEKIT_PUBLIC_KEY ?? "",
   imagekitPrivateKey: process.env.IMAGEKIT_PRIVATE_KEY ?? "",
   imagekitUrlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT ?? "",
+  clerkSecretKey: process.env.CLERK_SECRET_KEY ?? "",
   clerkWebhookSecret: process.env.CLERK_WEBHOOK_SECRET ?? "",
   redisUrl: process.env.REDIS_URL ?? "",
 };

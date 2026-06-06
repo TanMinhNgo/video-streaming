@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { z } from "zod";
+import { getRequestUserId } from "../../middleware/auth.ts";
 import { AnalyticsEvent } from "./analyticsEvent.schema.ts";
 import { WatchHistory } from "./watchHistory.schema.ts";
 import { User } from "../users/user.schema.ts";
@@ -18,7 +19,7 @@ const eventSchema = z.array(
 
 export const postAnalyticsEvents = async (req: Request, res: Response) => {
   const payload = eventSchema.parse(req.body);
-  const authenticatedUserId = req.auth?.userId ?? null;
+  const authenticatedUserId = getRequestUserId(req) ?? null;
   const docs = payload.map((e) => ({
     ...e,
     userId: authenticatedUserId,
@@ -45,7 +46,7 @@ export const postAnalyticsEvents = async (req: Request, res: Response) => {
 export const getVideoAnalytics = async (req: Request, res: Response) => {
   const video = await Video.findById(req.params.id);
   if (!video) return res.error("Video not found", 404);
-  if (video.uploaderId !== req.auth?.userId) return res.error("Forbidden", 403);
+  if (video.uploaderId !== getRequestUserId(req)) return res.error("Forbidden", 403);
   const watchStats = await WatchHistory.aggregate([
     { $match: { videoId: video._id } },
     { $group: { _id: "$videoId", avgCompletionRate: { $avg: "$completionRate" }, totalWatchDuration: { $sum: "$watchDuration" } } },
@@ -54,7 +55,7 @@ export const getVideoAnalytics = async (req: Request, res: Response) => {
 };
 
 export const getAnalyticsDashboard = async (req: Request, res: Response) => {
-  const clerkId = req.auth?.userId;
+  const clerkId = getRequestUserId(req);
   const videos = await Video.find({ uploaderId: clerkId, status: "ready" });
   const ids = videos.map((v) => v._id);
   const events = await AnalyticsEvent.countDocuments({ videoId: { $in: ids } });
@@ -66,7 +67,7 @@ export const getAnalyticsDashboard = async (req: Request, res: Response) => {
 };
 
 export const getWatchHistory = async (req: Request, res: Response) => {
-  const clerkId = req.auth?.userId;
+  const clerkId = getRequestUserId(req);
   if (!clerkId) return res.error("Unauthorized", 401);
   const user = await User.findOne({ clerkId });
   if (!user) return res.success([]);

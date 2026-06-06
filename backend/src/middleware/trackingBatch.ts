@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { AnalyticsEvent } from "../modules/analytics/analyticsEvent.schema.ts";
+import { getRequestUserId } from "./auth.ts";
 
 type BufferedEvent = {
   sessionId: string;
@@ -37,7 +38,7 @@ export const trackingBatchMiddleware = (req: Request, _res: Response, next: Next
     if (!req.path.startsWith("/api")) return;
     buffer.push({
       sessionId: req.header("x-session-id") || `${req.ip}:${Date.now()}`,
-      userId: req.auth?.userId,
+      userId: getRequestUserId(req),
       eventType: "api_call",
       metadata: { method: req.method, path: req.originalUrl },
       timestamp: new Date(),
@@ -45,4 +46,3 @@ export const trackingBatchMiddleware = (req: Request, _res: Response, next: Next
   });
   next();
 };
-

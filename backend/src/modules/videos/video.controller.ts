@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import mongoose from "mongoose";
 import { z } from "zod";
+import { getRequestUserId } from "../../middleware/auth.ts";
 import {
   addComment,
   createVideo,
@@ -50,7 +51,7 @@ const getValidId = (value: string | string[] | undefined, res: Response) => {
 
 export const postVideo = async (req: Request, res: Response) => {
   const payload = createVideoSchema.parse(req.body);
-  const uploaderId = req.auth?.userId;
+  const uploaderId = getRequestUserId(req);
   if (!uploaderId) return res.error("Unauthorized", 401);
   const video = await createVideo({ ...payload, uploaderId });
   res.success(video, 201);
@@ -62,7 +63,7 @@ export const getVideos = async (req: Request, res: Response) => {
 };
 
 export const getMyVideos = async (req: Request, res: Response) => {
-  const clerkId = req.auth?.userId;
+  const clerkId = getRequestUserId(req);
   if (!clerkId) return res.error("Unauthorized", 401);
   res.success(await listCreatorVideos(clerkId, true));
 };
@@ -76,13 +77,13 @@ export const getCreatorVideos = async (req: Request, res: Response) => {
 export const getVideoDetail = async (req: Request, res: Response) => {
   const id = getValidId(req.params.id, res);
   if (!id) return;
-  const video = await getVideoById(id, req.auth?.userId);
+  const video = await getVideoById(id, getRequestUserId(req));
   if (!video) return res.error("Video not found", 404);
   res.success(video);
 };
 
 export const putVideo = async (req: Request, res: Response) => {
-  const uploaderId = req.auth?.userId;
+  const uploaderId = getRequestUserId(req);
   if (!uploaderId) return res.error("Unauthorized", 401);
   const id = getValidId(req.params.id, res);
   if (!id) return;
@@ -93,7 +94,7 @@ export const putVideo = async (req: Request, res: Response) => {
 };
 
 export const removeVideo = async (req: Request, res: Response) => {
-  const uploaderId = req.auth?.userId;
+  const uploaderId = getRequestUserId(req);
   if (!uploaderId) return res.error("Unauthorized", 401);
   const id = getValidId(req.params.id, res);
   if (!id) return;
@@ -105,13 +106,13 @@ export const removeVideo = async (req: Request, res: Response) => {
 export const getVideoStreamUrl = async (req: Request, res: Response) => {
   const id = getValidId(req.params.id, res);
   if (!id) return;
-  const video = await getVideoNoIncrement(id, req.auth?.userId);
+  const video = await getVideoNoIncrement(id, getRequestUserId(req));
   if (!video) return res.error("Video not found", 404);
   res.success({ streamUrl: getStreamUrl(video.imageKitPath, video.visibility === "private") });
 };
 
 export const getRecommendations = async (req: Request, res: Response) => {
-  res.success(await listRecommendations(req.auth?.userId));
+  res.success(await listRecommendations(getRequestUserId(req)));
 };
 
 export const getSearch = async (req: Request, res: Response) => {
@@ -121,7 +122,7 @@ export const getSearch = async (req: Request, res: Response) => {
 };
 
 export const postLike = async (req: Request, res: Response) => {
-  const clerkId = req.auth?.userId;
+  const clerkId = getRequestUserId(req);
   if (!clerkId) return res.error("Unauthorized", 401);
   const id = getValidId(req.params.id, res);
   if (!id) return;
@@ -131,7 +132,7 @@ export const postLike = async (req: Request, res: Response) => {
 };
 
 export const postComment = async (req: Request, res: Response) => {
-  const clerkId = req.auth?.userId;
+  const clerkId = getRequestUserId(req);
   if (!clerkId) return res.error("Unauthorized", 401);
   const id = getValidId(req.params.id, res);
   if (!id) return;

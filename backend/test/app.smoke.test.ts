@@ -2,6 +2,7 @@ import request from "supertest";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 
 vi.mock("@clerk/express", () => ({
+  getAuth: (req: any) => req.auth ?? { userId: null, sessionId: null },
   clerkMiddleware: () => (req: any, _res: any, next: any) => {
     const auth = req.headers.authorization as string | undefined;
     const token = auth?.startsWith("Bearer ") ? auth.slice("Bearer ".length) : undefined;
@@ -70,6 +71,25 @@ describe("Backend smoke tests", () => {
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
     expect(Array.isArray(res.body.data.data)).toBe(true);
+  });
+
+  it("GET /api/openapi.json exposes the API contract", async () => {
+    const res = await request(app).get("/api/openapi.json");
+    expect(res.status).toBe(200);
+    expect(res.body.openapi).toBe("3.0.3");
+    expect(res.body.paths["/api/videos"].post).toBeDefined();
+  });
+
+  it("GET /api/auth/status reports Clerk authentication state", async () => {
+    const anonymous = await request(app).get("/api/auth/status");
+    expect(anonymous.body.data.isAuthenticated).toBe(false);
+    expect(anonymous.body.data.bearerTokenPresent).toBe(false);
+
+    const authenticated = await request(app)
+      .get("/api/auth/status")
+      .set("Authorization", "Bearer clerk_test_user");
+    expect(authenticated.body.data.isAuthenticated).toBe(true);
+    expect(authenticated.body.data.userId).toBe("clerk_test_user");
   });
 
   it("POST /api/webhooks/clerk rejects missing Svix headers", async () => {

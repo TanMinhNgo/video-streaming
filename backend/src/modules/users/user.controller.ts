@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { z } from "zod";
 import { cacheDel, cacheGet, cacheSet } from "../../config/redis.ts";
+import { getRequestUserId } from "../../middleware/auth.ts";
 import { User } from "./user.schema.ts";
 import { Video } from "../videos/video.schema.ts";
 
@@ -19,7 +20,7 @@ const ensureCurrentUser = async (clerkId: string) => {
 };
 
 export const getMe = async (req: Request, res: Response) => {
-  const clerkId = req.auth?.userId;
+  const clerkId = getRequestUserId(req);
   if (!clerkId) return res.error("Unauthorized", 401);
   const cacheKey = `user:me:${clerkId}`;
   const cached = await cacheGet<Record<string, unknown>>(cacheKey);
@@ -30,7 +31,7 @@ export const getMe = async (req: Request, res: Response) => {
 };
 
 export const updateMe = async (req: Request, res: Response) => {
-  const clerkId = req.auth?.userId;
+  const clerkId = getRequestUserId(req);
   if (!clerkId) return res.error("Unauthorized", 401);
   const payload = updateMeSchema.parse(req.body);
   const user = await User.findOneAndUpdate(
@@ -53,7 +54,7 @@ export const getPublicProfile = async (req: Request, res: Response) => {
 };
 
 export const toggleSubscribe = async (req: Request, res: Response) => {
-  const clerkId = req.auth?.userId;
+  const clerkId = getRequestUserId(req);
   if (!clerkId) return res.error("Unauthorized", 401);
   const target = await User.findById(req.params.id);
   if (!target) return res.error("User not found", 404);
@@ -73,7 +74,7 @@ export const toggleSubscribe = async (req: Request, res: Response) => {
 };
 
 export const getSubscriptionFeed = async (req: Request, res: Response) => {
-  const clerkId = req.auth?.userId;
+  const clerkId = getRequestUserId(req);
   if (!clerkId) return res.error("Unauthorized", 401);
   const me = await User.findOne({ clerkId });
   if (!me?.subscriptions.length) return res.success([]);

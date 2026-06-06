@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { logger } from "../config/logger.ts";
+import { getRequestUserId } from "./auth.ts";
 
 export const requestLogger = (req: Request, res: Response, next: NextFunction) => {
   const start = Date.now();
@@ -9,7 +10,7 @@ export const requestLogger = (req: Request, res: Response, next: NextFunction) =
       url: req.originalUrl,
       statusCode: res.statusCode,
       responseTime: Date.now() - start,
-      userId: req.auth?.userId ?? null,
+      userId: getRequestUserId(req) ?? null,
     });
   });
   next();

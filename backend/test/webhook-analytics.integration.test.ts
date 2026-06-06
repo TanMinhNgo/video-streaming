@@ -7,6 +7,7 @@ import { Video } from "../src/modules/videos/video.schema.ts";
 import { WatchHistory } from "../src/modules/analytics/watchHistory.schema.ts";
 
 vi.mock("@clerk/express", () => ({
+  getAuth: (req: any) => req.auth ?? { userId: null, sessionId: null },
   clerkMiddleware: () => (req: any, _res: any, next: any) => {
     const auth = req.headers.authorization as string | undefined;
     const token = auth?.startsWith("Bearer ") ? auth.slice("Bearer ".length) : undefined;
