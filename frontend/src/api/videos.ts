@@ -51,10 +51,8 @@ export const fetchStreamUrl = async (id: string) => {
   return response.data.data.streamUrl;
 };
 
-export const createVideo = async (payload: Record<string, unknown>, token: string) => {
-  const response = await api.post<ApiOk<Video>>("/videos", payload, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export const createVideo = async (payload: Record<string, unknown>) => {
+  const response = await api.post<ApiOk<Video>>("/videos", payload);
   return response.data.data;
 };
 

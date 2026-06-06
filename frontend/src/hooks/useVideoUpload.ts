@@ -34,14 +34,11 @@ export const useVideoUpload = () => {
   const upload = async (
     file: File,
     payload: { title: string; description?: string; tags: string[]; visibility: "public" | "private" | "unlisted" },
-    token: string,
   ) => {
     setUploading(true);
     setProgress(0);
     try {
-      const authResponse = await api.get<ApiOk<ImageKitAuth>>("/imagekit/auth", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const authResponse = await api.get<ApiOk<ImageKitAuth>>("/imagekit/auth");
       const xhr = new XMLHttpRequest();
       xhr.upload.addEventListener("progress", (event) => {
         if (event.lengthComputable) setProgress((event.loaded / event.total) * 100);
@@ -57,19 +54,16 @@ export const useVideoUpload = () => {
       });
       setProgress(100);
       const duration = await getVideoDuration(file);
-      await createVideo(
-        {
-          ...payload,
-          imageKitFileId: result.fileId,
-          imageKitUrl: result.url,
-          imageKitPath: result.filePath,
-          thumbnailUrl: result.thumbnailUrl,
-          duration,
-          fileSize: result.size,
-          mimeType: file.type,
-        },
-        token,
-      );
+      await createVideo({
+        ...payload,
+        imageKitFileId: result.fileId,
+        imageKitUrl: result.url,
+        imageKitPath: result.filePath,
+        thumbnailUrl: result.thumbnailUrl,
+        duration,
+        fileSize: result.size,
+        mimeType: file.type,
+      });
     } finally {
       setUploading(false);
     }

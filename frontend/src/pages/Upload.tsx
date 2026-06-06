@@ -1,4 +1,3 @@
-import { useAuth } from "@clerk/clerk-react";
 import { useState } from "react";
 import { FileVideo, UploadCloud } from "lucide-react";
 import { useDropzone } from "react-dropzone";
@@ -10,7 +9,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { useVideoUpload } from "@/hooks/useVideoUpload";
 
 export const UploadPage = () => {
-  const { getToken } = useAuth();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState("");
@@ -31,15 +29,13 @@ export const UploadPage = () => {
 
   const onSubmit = async () => {
     if (!file) return toast.error("Chọn file video");
-    const tk = await getToken();
-    if (!tk) return toast.error("Bạn cần đăng nhập");
     if (!title.trim()) return toast.error("Nhập tiêu đề video");
     const run = upload(file, {
       title: title.trim(),
       description,
       tags: tags.split(",").map((v) => v.trim()).filter(Boolean),
       visibility,
-    }, tk);
+    });
     try {
       await toast.promise(run, {
         loading: "Đang tải video...",
