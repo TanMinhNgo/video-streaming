@@ -29,6 +29,16 @@
 }
 
 body {
-  @apply bg-background text-foreground antialiased;
+  @apply min-w-80 bg-background text-foreground antialiased;
 }
 
+button,
+a,
+input,
+textarea {
+  @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+}
+
+::selection {
+  background: color-mix(in oklab, var(--foreground) 18%, transparent);
+}

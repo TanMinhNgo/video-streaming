@@ -1,94 +1,121 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { BarChart3, Eye, Heart, Video as VideoIcon } from "lucide-react";
 import { useState } from "react";
+import toast from "react-hot-toast";
+import { fetchDashboard } from "@/api/analytics";
+import { deleteVideo, fetchMyVideos } from "@/api/videos";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { EmptyState, ErrorState } from "@/components/ui/feedback";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { sampleVideos } from "@/lib/sampleData";
 import { formatCount } from "@/lib/utils";
 
 export const StudioPage = () => {
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const totalViews = sampleVideos.reduce((sum, video) => sum + video.viewCount, 0);
-  const totalLikes = sampleVideos.reduce((sum, video) => sum + video.likeCount, 0);
+  const queryClient = useQueryClient();
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const dashboardQuery = useQuery({ queryKey: ["analytics", "dashboard"], queryFn: fetchDashboard });
+  const videosQuery = useQuery({ queryKey: ["videos", "mine"], queryFn: fetchMyVideos });
+  const deleteMutation = useMutation({
+    mutationFn: deleteVideo,
+    onSuccess: async () => {
+      toast.success("Đã xóa video");
+      setDeleteId(null);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["videos", "mine"] }),
+        queryClient.invalidateQueries({ queryKey: ["analytics", "dashboard"] }),
+        queryClient.invalidateQueries({ queryKey: ["videos", "list"] }),
+      ]);
+    },
+    onError: () => toast.error("Không thể xóa video"),
+  });
+
+  const stats = dashboardQuery.data;
+  const metricCards = [
+    { label: "Video", value: stats?.videos ?? 0, icon: VideoIcon },
+    { label: "Lượt xem", value: stats?.views ?? 0, icon: Eye },
+    { label: "Lượt thích", value: stats?.likes ?? 0, icon: Heart },
+    { label: "Sự kiện", value: stats?.events ?? 0, icon: BarChart3 },
+  ];
 
   return (
-    <main className="space-y-4">
-      <h1 className="text-2xl font-semibold">Studio Dashboard</h1>
+    <div className="space-y-5">
+      <div>
+        <h1 className="text-2xl font-semibold">Studio</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Theo dõi hiệu suất và quản lý video đã tải lên.</p>
+      </div>
 
       <Tabs defaultValue="overview">
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="videos">Videos</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
+        <TabsList className="flex w-full overflow-x-auto sm:w-fit">
+          <TabsTrigger value="overview">Tổng quan</TabsTrigger>
+          <TabsTrigger value="videos">Video</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview">
-        <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          {[
-            ["Total Videos", String(sampleVideos.length)],
-            ["Total Views", formatCount(totalViews)],
-            ["Total Likes", formatCount(totalLikes)],
-            ["Subscribers", "27.6K"],
-          ].map(([label, value]) => (
-            <Card key={label}>
-              <CardHeader><h3 className="text-sm text-muted-foreground">{label}</h3></CardHeader>
-              <CardContent><p className="text-2xl font-bold">{value}</p></CardContent>
-            </Card>
-          ))}
-        </section>
+          {dashboardQuery.isLoading ? (
+            <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{Array.from({ length: 4 }).map((_, index) => <Skeleton key={index} className="h-28" />)}</section>
+          ) : dashboardQuery.isError ? (
+            <ErrorState title="Không thể tải thống kê" description="Dữ liệu Studio hiện chưa khả dụng." onRetry={() => void dashboardQuery.refetch()} />
+          ) : (
+            <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              {metricCards.map(({ label, value, icon: Icon }) => (
+                <Card key={label}>
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <h2 className="text-sm text-muted-foreground">{label}</h2>
+                    <Icon className="size-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent><p className="text-2xl font-bold tabular-nums">{formatCount(value)}</p></CardContent>
+                </Card>
+              ))}
+            </section>
+          )}
         </TabsContent>
 
         <TabsContent value="videos">
-        <Card>
-          <CardHeader><h2 className="text-lg font-semibold">Recent Uploads</h2></CardHeader>
-          <CardContent className="space-y-3">
-            <div className="space-y-2">
-              {sampleVideos.slice(0, 4).map((video) => (
-                <div key={video._id} className="grid gap-2 rounded-md border p-3 sm:grid-cols-[1fr_auto] sm:items-center">
-                  <div>
-                    <h3 className="text-sm font-medium">{video.title}</h3>
-                    <p className="text-xs text-muted-foreground">{formatCount(video.viewCount)} views | {video.tags.join(", ")}</p>
-                  </div>
-                  <Button variant="secondary" type="button">Edit</Button>
-                </div>
-              ))}
-            </div>
-            <Button variant="secondary" onClick={() => setConfirmOpen(true)}>Delete selected video</Button>
-          </CardContent>
-        </Card>
-        </TabsContent>
-
-        <TabsContent value="analytics">
-        <Card>
-          <CardHeader><h2 className="text-lg font-semibold">Analytics Snapshot</h2></CardHeader>
-          <CardContent className="grid gap-3 sm:grid-cols-3">
-            {[
-              ["Avg watch", "3m 42s"],
-              ["Completion", "64%"],
-              ["Search traffic", "38%"],
-            ].map(([label, value]) => (
-              <div key={label} className="rounded-md border p-3">
-                <p className="text-sm text-muted-foreground">{label}</p>
-                <strong className="text-xl">{value}</strong>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+          {videosQuery.isLoading ? (
+            <Skeleton className="h-72 w-full" />
+          ) : videosQuery.isError ? (
+            <ErrorState title="Không thể tải video" description="Danh sách video của bạn hiện chưa khả dụng." onRetry={() => void videosQuery.refetch()} />
+          ) : videosQuery.data?.length ? (
+            <Card>
+              <CardHeader><h2 className="text-lg font-semibold">Video của bạn</h2></CardHeader>
+              <CardContent className="space-y-2">
+                {videosQuery.data.map((video) => (
+                  <article key={video._id} className="grid gap-3 rounded-lg border p-3 sm:grid-cols-[7rem_minmax(0,1fr)_auto] sm:items-center">
+                    <img src={video.thumbnailUrl || video.imageKitUrl} alt="" className="aspect-video w-full rounded-md object-cover sm:w-28" />
+                    <div className="min-w-0">
+                      <h3 className="truncate text-sm font-medium">{video.title}</h3>
+                      <p className="mt-1 text-xs text-muted-foreground">{formatCount(video.viewCount)} lượt xem · {formatCount(video.likeCount)} lượt thích · {video.visibility}</p>
+                    </div>
+                    <Button variant="ghost" type="button" onClick={() => setDeleteId(video._id)}>Xóa</Button>
+                  </article>
+                ))}
+              </CardContent>
+            </Card>
+          ) : (
+            <EmptyState title="Bạn chưa tải video" description="Video tải lên thành công sẽ xuất hiện trong danh sách quản lý." />
+          )}
         </TabsContent>
       </Tabs>
 
-      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+      <Dialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete video?</DialogTitle>
-            <DialogDescription>This action marks the video as deleted and removes file from ImageKit.</DialogDescription>
+            <DialogTitle>Xóa video?</DialogTitle>
+            <DialogDescription>Video sẽ bị xóa khỏi StreamBox và file tương ứng trên ImageKit. Thao tác này không thể hoàn tác.</DialogDescription>
           </DialogHeader>
-          <DialogFooter>
-            <DialogClose asChild><Button variant="ghost">Cancel</Button></DialogClose>
-            <DialogClose asChild><Button>Confirm delete</Button></DialogClose>
+          <DialogFooter className="mt-5 flex-col-reverse sm:flex-row">
+            <DialogClose asChild><Button variant="ghost">Hủy</Button></DialogClose>
+            <Button
+              disabled={!deleteId || deleteMutation.isPending}
+              onClick={() => deleteId && deleteMutation.mutate(deleteId)}
+            >
+              {deleteMutation.isPending ? "Đang xóa..." : "Xác nhận xóa"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </main>
+    </div>
   );
 };

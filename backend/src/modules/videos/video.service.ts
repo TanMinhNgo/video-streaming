@@ -18,6 +18,19 @@ export const listPublicVideos = async (cursor?: string, limit = 12) => {
   return { data: videos.slice(0, limit), hasMore, nextCursor: hasMore ? videos[limit - 1]?._id : null };
 };
 
+export const listCreatorVideos = async (clerkId: string, includePrivate = false) =>
+  Video.find({
+    uploaderId: clerkId,
+    status: "ready",
+    ...(includePrivate ? {} : { visibility: "public" }),
+  }).sort({ createdAt: -1 });
+
+export const listVideosByUserId = async (userId: string) => {
+  const user = await User.findById(userId);
+  if (!user) return null;
+  return listCreatorVideos(user.clerkId);
+};
+
 const accessibleVideoQuery = (id: string, requesterId?: string) => ({
   _id: id,
   status: "ready" as const,

@@ -33,7 +33,7 @@ export const useVideoUpload = () => {
 
   const upload = async (
     file: File,
-    payload: { title: string; description?: string; tags: string[] },
+    payload: { title: string; description?: string; tags: string[]; visibility: "public" | "private" | "unlisted" },
     token: string,
   ) => {
     setUploading(true);

@@ -64,3 +64,27 @@ export const getAnalyticsDashboard = async (req: Request, res: Response) => {
   );
   res.success({ videos: videos.length, views: totals.views, likes: totals.likes, events });
 };
+
+export const getWatchHistory = async (req: Request, res: Response) => {
+  const clerkId = req.auth?.userId;
+  if (!clerkId) return res.error("Unauthorized", 401);
+  const user = await User.findOne({ clerkId });
+  if (!user) return res.success([]);
+  const history = await WatchHistory.find({ userId: user._id })
+    .sort({ watchedAt: -1 })
+    .limit(50)
+    .populate({
+      path: "videoId",
+      match: { status: "ready", visibility: { $in: ["public", "unlisted"] } },
+    });
+  res.success(
+    history
+      .filter((entry) => entry.videoId)
+      .map((entry) => ({
+        video: entry.videoId,
+        watchDuration: entry.watchDuration,
+        completionRate: entry.completionRate,
+        watchedAt: entry.watchedAt,
+      })),
+  );
+};

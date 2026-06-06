@@ -1,6 +1,5 @@
 import { api } from "./axios";
-import type { User } from "@/types";
-import { sampleUserById } from "@/lib/sampleData";
+import type { User, Video } from "@/types";
 
 type ApiOk<T> = { success: true; data: T };
 
@@ -19,10 +18,11 @@ export const updateMe = async (payload: Partial<User>, token: string) => {
 };
 
 export const fetchUserProfile = async (id: string) => {
-  try {
-    const response = await api.get<ApiOk<User>>(`/users/${id}`);
-    return response.data.data;
-  } catch {
-    return sampleUserById(id);
-  }
+  const response = await api.get<ApiOk<User>>(`/users/${id}`);
+  return response.data.data;
+};
+
+export const fetchSubscriptionFeed = async () => {
+  const response = await api.get<ApiOk<Video[]>>("/users/subscriptions/feed");
+  return response.data.data;
 };

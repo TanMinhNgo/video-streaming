@@ -3,6 +3,8 @@ import { requireAuth } from "@clerk/express";
 import { asyncHandler } from "../../utils/asyncHandler.ts";
 import {
   getComments,
+  getCreatorVideos,
+  getMyVideos,
   getRecommendations,
   getSearch,
   getVideoDetail,
@@ -18,6 +20,8 @@ import {
 export const videoRouter = Router();
 
 videoRouter.get("/recommendations", asyncHandler(getRecommendations));
+videoRouter.get("/mine", requireAuth(), asyncHandler(getMyVideos));
+videoRouter.get("/creator/:userId", asyncHandler(getCreatorVideos));
 videoRouter.post("/", requireAuth(), asyncHandler(postVideo));
 videoRouter.get("/", asyncHandler(getVideos));
 videoRouter.get("/search", asyncHandler(getSearch));

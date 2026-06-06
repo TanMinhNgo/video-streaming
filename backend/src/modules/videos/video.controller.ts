@@ -9,8 +9,10 @@ import {
   getVideoById,
   getVideoNoIncrement,
   listComments,
+  listCreatorVideos,
   listPublicVideos,
   listRecommendations,
+  listVideosByUserId,
   searchVideos,
   toggleLike,
   updateVideo,
@@ -57,6 +59,18 @@ export const postVideo = async (req: Request, res: Response) => {
 export const getVideos = async (req: Request, res: Response) => {
   const cursor = typeof req.query.cursor === "string" ? req.query.cursor : undefined;
   res.success(await listPublicVideos(cursor));
+};
+
+export const getMyVideos = async (req: Request, res: Response) => {
+  const clerkId = req.auth?.userId;
+  if (!clerkId) return res.error("Unauthorized", 401);
+  res.success(await listCreatorVideos(clerkId, true));
+};
+
+export const getCreatorVideos = async (req: Request, res: Response) => {
+  const videos = await listVideosByUserId(getId(req.params.userId));
+  if (!videos) return res.error("User not found", 404);
+  res.success(videos);
 };
 
 export const getVideoDetail = async (req: Request, res: Response) => {

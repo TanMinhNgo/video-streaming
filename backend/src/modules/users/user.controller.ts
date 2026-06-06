@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { z } from "zod";
 import { cacheDel, cacheGet, cacheSet } from "../../config/redis.ts";
 import { User } from "./user.schema.ts";
+import { Video } from "../videos/video.schema.ts";
 
 const updateMeSchema = z.object({
   username: z.string().min(1).optional(),
@@ -69,4 +70,21 @@ export const toggleSubscribe = async (req: Request, res: Response) => {
   await Promise.all([me.save(), target.save()]);
   await cacheDel(`user:me:${clerkId}`, `user:public:${target._id}`);
   res.success({ subscribed: !isSubscribed, subscriberCount: target.subscriberCount });
+};
+
+export const getSubscriptionFeed = async (req: Request, res: Response) => {
+  const clerkId = req.auth?.userId;
+  if (!clerkId) return res.error("Unauthorized", 401);
+  const me = await User.findOne({ clerkId });
+  if (!me?.subscriptions.length) return res.success([]);
+  const creators = await User.find({ _id: { $in: me.subscriptions } }).select("clerkId");
+  const creatorIds = creators.map((creator) => creator.clerkId);
+  const videos = await Video.find({
+    uploaderId: { $in: creatorIds },
+    visibility: "public",
+    status: "ready",
+  })
+    .sort({ createdAt: -1 })
+    .limit(50);
+  res.success(videos);
 };

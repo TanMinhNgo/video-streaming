@@ -1,52 +1,31 @@
 import { api } from "./axios";
 import type { Comment, Paginated, Video } from "@/types";
-import { findSampleVideo, sampleComments, sampleVideos, searchSampleVideos, toPaginatedVideos } from "@/lib/sampleData";
 
 type ApiOk<T> = { success: true; data: T };
 
 export const fetchVideos = async (cursor?: string) => {
-  try {
-    const response = await api.get<ApiOk<Paginated<Video>>>("/videos", { params: { cursor } });
-    return response.data.data.data.length ? response.data.data : toPaginatedVideos();
-  } catch {
-    return toPaginatedVideos();
-  }
+  const response = await api.get<ApiOk<Paginated<Video>>>("/videos", { params: { cursor } });
+  return response.data.data;
 };
 
 export const fetchVideoDetail = async (id: string) => {
-  try {
-    const response = await api.get<ApiOk<Video>>(`/videos/${id}`);
-    return response.data.data;
-  } catch {
-    return findSampleVideo(id);
-  }
+  const response = await api.get<ApiOk<Video>>(`/videos/${id}`);
+  return response.data.data;
 };
 
 export const fetchRecommendations = async () => {
-  try {
-    const response = await api.get<ApiOk<Video[]>>("/videos/recommendations");
-    return response.data.data.length ? response.data.data : sampleVideos.slice(0, 4);
-  } catch {
-    return sampleVideos.slice(0, 4);
-  }
+  const response = await api.get<ApiOk<Video[]>>("/videos/recommendations");
+  return response.data.data;
 };
 
 export const fetchSearch = async (q: string) => {
-  try {
-    const response = await api.get<ApiOk<Video[]>>("/search", { params: { q } });
-    return response.data.data.length ? response.data.data : searchSampleVideos(q);
-  } catch {
-    return searchSampleVideos(q);
-  }
+  const response = await api.get<ApiOk<Video[]>>("/search", { params: { q } });
+  return response.data.data;
 };
 
 export const fetchComments = async (id: string, cursor?: string) => {
-  try {
-    const response = await api.get<ApiOk<Paginated<Comment>>>(`/videos/${id}/comments`, { params: { cursor } });
-    return response.data.data.data.length ? response.data.data : { data: sampleComments, hasMore: false, nextCursor: null };
-  } catch {
-    return { data: sampleComments, hasMore: false, nextCursor: null };
-  }
+  const response = await api.get<ApiOk<Paginated<Comment>>>(`/videos/${id}/comments`, { params: { cursor } });
+  return response.data.data;
 };
 
 export const postComment = async (id: string, content: string, token: string) => {
@@ -68,12 +47,8 @@ export const toggleLike = async (id: string, token: string) => {
 };
 
 export const fetchStreamUrl = async (id: string) => {
-  try {
-    const response = await api.get<ApiOk<{ streamUrl: string }>>(`/videos/${id}/stream-url`);
-    return response.data.data.streamUrl;
-  } catch {
-    return findSampleVideo(id).imageKitUrl;
-  }
+  const response = await api.get<ApiOk<{ streamUrl: string }>>(`/videos/${id}/stream-url`);
+  return response.data.data.streamUrl;
 };
 
 export const createVideo = async (payload: Record<string, unknown>, token: string) => {
@@ -81,4 +56,18 @@ export const createVideo = async (payload: Record<string, unknown>, token: strin
     headers: { Authorization: `Bearer ${token}` },
   });
   return response.data.data;
+};
+
+export const fetchMyVideos = async () => {
+  const response = await api.get<ApiOk<Video[]>>("/videos/mine");
+  return response.data.data;
+};
+
+export const fetchCreatorVideos = async (userId: string) => {
+  const response = await api.get<ApiOk<Video[]>>(`/videos/creator/${userId}`);
+  return response.data.data;
+};
+
+export const deleteVideo = async (id: string) => {
+  await api.delete(`/videos/${id}`);
 };
