@@ -18,15 +18,17 @@ const eventSchema = z.array(
 
 export const postAnalyticsEvents = async (req: Request, res: Response) => {
   const payload = eventSchema.parse(req.body);
+  const authenticatedUserId = req.auth?.userId ?? null;
   const docs = payload.map((e) => ({
     ...e,
+    userId: authenticatedUserId,
     timestamp: e.timestamp ? new Date(e.timestamp) : new Date(),
   }));
   await AnalyticsEvent.insertMany(docs, { ordered: false });
 
-  const progressEvents = payload.filter((e) => e.eventType === "video_progress" && e.userId && e.videoId);
+  const progressEvents = payload.filter((e) => e.eventType === "video_progress" && authenticatedUserId && e.videoId);
   for (const event of progressEvents) {
-    const user = await User.findOne({ clerkId: event.userId as string });
+    const user = await User.findOne({ clerkId: authenticatedUserId });
     if (!user || !event.videoId) continue;
     const completionRate = Number((event.metadata?.completionRate as number) ?? 0);
     const watchDuration = Number((event.metadata?.watchDuration as number) ?? 0);

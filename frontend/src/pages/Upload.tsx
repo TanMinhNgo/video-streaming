@@ -14,8 +14,7 @@ export const UploadPage = () => {
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState("");
   const [file, setFile] = useState<File | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const { upload, uploading, progress } = useVideoUpload(token);
+  const { upload, uploading, progress } = useVideoUpload();
 
   const { getRootProps, getInputProps } = useDropzone({
     accept: { "video/mp4": [".mp4"], "video/webm": [".webm"] },
@@ -28,12 +27,11 @@ export const UploadPage = () => {
     if (!file) return toast.error("Chọn file video");
     const tk = await getToken();
     if (!tk) return toast.error("Bạn cần đăng nhập");
-    setToken(tk);
     const run = upload(file, {
       title,
       description,
       tags: tags.split(",").map((v) => v.trim()).filter(Boolean),
-    });
+    }, tk);
     await toast.promise(run, {
       loading: "Uploading video...",
       success: "Upload thành công",

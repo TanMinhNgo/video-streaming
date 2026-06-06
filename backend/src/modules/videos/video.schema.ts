@@ -10,6 +10,8 @@ const videoSchema = new Schema(
     imageKitPath: { type: String, required: true },
     thumbnailUrl: { type: String, default: "" },
     duration: { type: Number, default: 0 },
+    fileSize: { type: Number, default: 0 },
+    mimeType: { type: String, default: "" },
     tags: { type: [String], default: [] },
     visibility: { type: String, enum: ["public", "private", "unlisted"], default: "public" },
     status: { type: String, enum: ["uploading", "ready", "deleted"], default: "ready" },

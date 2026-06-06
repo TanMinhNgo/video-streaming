@@ -14,7 +14,7 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=5000
-      - REDIS_URL=redis://localhost:6379
+      - REDIS_URL=redis://redis:6379
     ports:
       - "5000:5000"
 
@@ -30,6 +30,16 @@ services:
       - backend
     ports:
       - "5173:80"
+
+  redis:
+    image: redis:7-alpine
+    container_name: video-streaming-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
 
 volumes:
   redis_data:

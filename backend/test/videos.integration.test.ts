@@ -97,4 +97,39 @@ describe("Videos integration", () => {
     });
     expect(res.status).toBe(401);
   });
+
+  it("only lets the owner access a private video and its stream URL", async () => {
+    const createRes = await request(app).post("/api/videos").set(authHeader).send({
+      title: "Private video",
+      imageKitFileId: "ik-private",
+      imageKitUrl: "https://ik.imagekit.io/demo/private.mp4",
+      imageKitPath: "/videos/test/private.mp4",
+      visibility: "private",
+    });
+    const id = createRes.body.data._id as string;
+
+    expect((await request(app).get(`/api/videos/${id}`)).status).toBe(404);
+    expect((await request(app).get(`/api/videos/${id}/stream-url`)).status).toBe(404);
+
+    const ownerDetail = await request(app).get(`/api/videos/${id}`).set(authHeader);
+    expect(ownerDetail.status).toBe(200);
+
+    const ownerStream = await request(app).get(`/api/videos/${id}/stream-url`).set(authHeader);
+    expect(ownerStream.status).toBe(200);
+    expect(ownerStream.body.data.streamUrl).toBe("https://example.com/stream.mp4");
+  });
+
+  it("returns 400 for invalid ids and validation failures", async () => {
+    const invalidId = await request(app).get("/api/videos/not-an-object-id");
+    expect(invalidId.status).toBe(400);
+
+    const invalidPayload = await request(app).post("/api/videos").set(authHeader).send({
+      title: "",
+      imageKitFileId: "ik-invalid",
+      imageKitUrl: "not-a-url",
+      imageKitPath: "/videos/test/invalid.mp4",
+    });
+    expect(invalidPayload.status).toBe(400);
+    expect(invalidPayload.body.error).toBe("Invalid request");
+  });
 });

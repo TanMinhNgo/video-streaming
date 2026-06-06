@@ -1,8 +1,17 @@
 import { useState } from "react";
 import { createVideo } from "@/api/videos";
+import { api } from "@/api/axios";
 import { imagekit } from "@/lib/imagekit";
 
-export const useVideoUpload = (token?: string | null) => {
+type ImageKitAuth = {
+  token: string;
+  expire: number;
+  signature: string;
+};
+
+type ApiOk<T> = { success: true; data: T };
+
+export const useVideoUpload = () => {
   const [progress, setProgress] = useState(0);
   const [uploading, setUploading] = useState(false);
 
@@ -10,21 +19,42 @@ export const useVideoUpload = (token?: string | null) => {
     new Promise((resolve) => {
       const video = document.createElement("video");
       video.preload = "metadata";
-      video.onloadedmetadata = () => resolve(Math.round(video.duration));
-      video.src = URL.createObjectURL(file);
+      const objectUrl = URL.createObjectURL(file);
+      video.onloadedmetadata = () => {
+        URL.revokeObjectURL(objectUrl);
+        resolve(Math.round(video.duration));
+      };
+      video.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        resolve(0);
+      };
+      video.src = objectUrl;
     });
 
-  const upload = async (file: File, payload: { title: string; description?: string; tags: string[] }) => {
-    if (!token) throw new Error("Unauthorized");
+  const upload = async (
+    file: File,
+    payload: { title: string; description?: string; tags: string[] },
+    token: string,
+  ) => {
     setUploading(true);
+    setProgress(0);
     try {
-      const result = (await (imagekit as any).upload({
+      const authResponse = await api.get<ApiOk<ImageKitAuth>>("/imagekit/auth", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const xhr = new XMLHttpRequest();
+      xhr.upload.addEventListener("progress", (event) => {
+        if (event.lengthComputable) setProgress((event.loaded / event.total) * 100);
+      });
+      const result = await imagekit.upload({
         file,
         fileName: `video_${Date.now()}_${file.name}`,
         folder: "/videos",
         tags: payload.tags,
         useUniqueFileName: false,
-      })) as any;
+        xhr,
+        ...authResponse.data.data,
+      });
       setProgress(100);
       const duration = await getVideoDuration(file);
       await createVideo(
@@ -35,6 +65,8 @@ export const useVideoUpload = (token?: string | null) => {
           imageKitPath: result.filePath,
           thumbnailUrl: result.thumbnailUrl,
           duration,
+          fileSize: result.size,
+          mimeType: file.type,
         },
         token,
       );

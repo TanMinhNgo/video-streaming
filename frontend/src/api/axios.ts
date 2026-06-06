@@ -6,6 +6,21 @@ export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
 });
 
+type TokenGetter = () => Promise<string | null>;
+let getAuthToken: TokenGetter | null = null;
+
+export const setAuthTokenGetter = (getter: TokenGetter | null) => {
+  getAuthToken = getter;
+};
+
+api.interceptors.request.use(async (config) => {
+  const token = await getAuthToken?.();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 api.interceptors.response.use(
   (response) => response,
   (error) => {

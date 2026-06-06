@@ -1,5 +1,7 @@
 import { Suspense, lazy, useEffect } from "react";
+import { useAuth } from "@clerk/clerk-react";
 import { Navigate, Route, Routes } from "react-router-dom";
+import { setAuthTokenGetter } from "@/api/axios";
 import { Navbar } from "@/components/layout/Navbar";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { prefetchRoute } from "@/lib/routePrefetch";
@@ -16,7 +18,14 @@ const SubscriptionsPage = lazy(() => import("@/pages/Subscriptions").then((m) =>
 const HistoryPage = lazy(() => import("@/pages/History").then((m) => ({ default: m.HistoryPage })));
 
 export default function App() {
+  const { getToken } = useAuth();
   const flush = useTrackingStore((s) => s.flush);
+
+  useEffect(() => {
+    setAuthTokenGetter(getToken);
+    return () => setAuthTokenGetter(null);
+  }, [getToken]);
+
   useEffect(() => {
     const id = setInterval(() => void flush(), 10000);
     const onUnload = () => void flush();
@@ -35,8 +44,8 @@ export default function App() {
       prefetchRoute("history");
     };
     if ("requestIdleCallback" in window) {
-      const idleId = (window as any).requestIdleCallback(run, { timeout: 1500 });
-      return () => (window as any).cancelIdleCallback?.(idleId);
+      const idleId = window.requestIdleCallback(run, { timeout: 1500 });
+      return () => window.cancelIdleCallback(idleId);
     }
     const t = setTimeout(run, 800);
     return () => clearTimeout(t);

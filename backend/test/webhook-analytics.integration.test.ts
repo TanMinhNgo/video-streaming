@@ -99,19 +99,22 @@ describe("Webhook + Analytics integration", () => {
       status: "ready",
     });
 
-    const res = await request(app).post("/api/analytics/events").send([
-      {
-        sessionId: "sess_1",
-        userId: "clerk_progress_user",
-        videoId: String(video._id),
-        eventType: "video_progress",
-        metadata: {
-          completionRate: 0.5,
-          watchDuration: 120,
+    const res = await request(app)
+      .post("/api/analytics/events")
+      .set("Authorization", "Bearer clerk_progress_user")
+      .send([
+        {
+          sessionId: "sess_1",
+          userId: "spoofed_user",
+          videoId: String(video._id),
+          eventType: "video_progress",
+          metadata: {
+            completionRate: 0.5,
+            watchDuration: 120,
+          },
+          timestamp: new Date().toISOString(),
         },
-        timestamp: new Date().toISOString(),
-      },
-    ]);
+      ]);
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);

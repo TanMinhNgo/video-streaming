@@ -11,39 +11,31 @@ import { Video } from "./video.schema.ts";
 export const createVideo = async (payload: Record<string, unknown>) => Video.create(payload);
 
 export const listPublicVideos = async (cursor?: string, limit = 12) => {
-  const key = `videos:list:${cursor ?? "first"}:${limit}`;
-  const cached = await cacheGet<{ data: unknown[]; hasMore: boolean; nextCursor: string | null }>(key);
-  if (cached) return cached;
   const query: Record<string, unknown> = { visibility: "public", status: "ready" };
   if (cursor) query._id = { $lt: cursor };
   const videos = await Video.find(query).sort({ _id: -1 }).limit(limit + 1);
   const hasMore = videos.length > limit;
-  const result = { data: videos.slice(0, limit), hasMore, nextCursor: hasMore ? videos[limit - 1]?._id : null };
-  await cacheSet(key, result, 120);
-  return result;
+  return { data: videos.slice(0, limit), hasMore, nextCursor: hasMore ? videos[limit - 1]?._id : null };
 };
 
-export const getVideoById = async (id: string) => {
-  const key = `video:${id}`;
-  const cached = await cacheGet<Record<string, unknown>>(key);
-  if (cached) {
-    await Video.findByIdAndUpdate(id, { $inc: { viewCount: 1 } });
-    const next = { ...cached, viewCount: Number(cached.viewCount ?? 0) + 1 };
-    await cacheSet(key, next, 300);
-    return next as unknown as Awaited<ReturnType<typeof Video.findById>>;
-  }
-  const video = await Video.findByIdAndUpdate(id, { $inc: { viewCount: 1 } }, { returnDocument: "after" });
-  if (video) await cacheSet(key, video, 300);
-  return video;
-};
-export const getVideoNoIncrement = async (id: string) => {
-  const key = `video:${id}`;
-  const cached = await cacheGet<Record<string, unknown>>(key);
-  if (cached) return cached as unknown as Awaited<ReturnType<typeof Video.findById>>;
-  const video = await Video.findById(id);
-  if (video) await cacheSet(key, video, 300);
-  return video;
-};
+const accessibleVideoQuery = (id: string, requesterId?: string) => ({
+  _id: id,
+  status: "ready" as const,
+  $or: [
+    { visibility: { $in: ["public", "unlisted"] as const } },
+    ...(requesterId ? [{ visibility: "private" as const, uploaderId: requesterId }] : []),
+  ],
+});
+
+export const getVideoById = async (id: string, requesterId?: string) =>
+  Video.findOneAndUpdate(
+    accessibleVideoQuery(id, requesterId),
+    { $inc: { viewCount: 1 } },
+    { returnDocument: "after" },
+  );
+
+export const getVideoNoIncrement = async (id: string, requesterId?: string) =>
+  Video.findOne(accessibleVideoQuery(id, requesterId));
 
 export const updateVideo = async (id: string, uploaderId: string, payload: Record<string, unknown>) =>
   Video.findOneAndUpdate({ _id: id, uploaderId }, { $set: payload }, { returnDocument: "after" }).then(async (video) => {
@@ -90,7 +82,11 @@ export const searchVideos = async (q: string) =>
   Video.find({
     visibility: "public",
     status: "ready",
-    $or: [{ title: { $regex: q, $options: "i" } }, { description: { $regex: q, $options: "i" } }, { tags: { $in: [new RegExp(q, "i")] } }],
+    $or: [
+      { title: { $regex: q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), $options: "i" } },
+      { description: { $regex: q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), $options: "i" } },
+      { tags: { $in: [new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i")] } },
+    ],
   })
     .sort({ viewCount: -1 })
     .limit(30);

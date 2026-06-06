@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import mongoose from "mongoose";
 import { z } from "zod";
 import {
   addComment,
@@ -22,18 +23,28 @@ const createVideoSchema = z.object({
   imageKitUrl: z.string().url(),
   imageKitPath: z.string().min(1),
   thumbnailUrl: z.string().optional(),
-  duration: z.number().optional(),
-  tags: z.array(z.string()).optional(),
+  duration: z.number().nonnegative().optional(),
+  fileSize: z.number().nonnegative().optional(),
+  mimeType: z.string().max(100).optional(),
+  tags: z.array(z.string().trim().min(1).max(50)).max(20).optional(),
   visibility: z.enum(["public", "private", "unlisted"]).optional(),
 });
 
 const updateVideoSchema = z.object({
   title: z.string().min(1).optional(),
   description: z.string().optional(),
-  tags: z.array(z.string()).optional(),
+  tags: z.array(z.string().trim().min(1).max(50)).max(20).optional(),
   visibility: z.enum(["public", "private", "unlisted"]).optional(),
 });
 const getId = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value ?? "");
+const getValidId = (value: string | string[] | undefined, res: Response) => {
+  const id = getId(value);
+  if (!mongoose.isValidObjectId(id)) {
+    res.error("Invalid video id", 400);
+    return null;
+  }
+  return id;
+};
 
 export const postVideo = async (req: Request, res: Response) => {
   const payload = createVideoSchema.parse(req.body);
@@ -49,7 +60,9 @@ export const getVideos = async (req: Request, res: Response) => {
 };
 
 export const getVideoDetail = async (req: Request, res: Response) => {
-  const video = await getVideoById(getId(req.params.id));
+  const id = getValidId(req.params.id, res);
+  if (!id) return;
+  const video = await getVideoById(id, req.auth?.userId);
   if (!video) return res.error("Video not found", 404);
   res.success(video);
 };
@@ -57,8 +70,10 @@ export const getVideoDetail = async (req: Request, res: Response) => {
 export const putVideo = async (req: Request, res: Response) => {
   const uploaderId = req.auth?.userId;
   if (!uploaderId) return res.error("Unauthorized", 401);
+  const id = getValidId(req.params.id, res);
+  if (!id) return;
   const payload = updateVideoSchema.parse(req.body);
-  const video = await updateVideo(getId(req.params.id), uploaderId, payload);
+  const video = await updateVideo(id, uploaderId, payload);
   if (!video) return res.error("Video not found or forbidden", 404);
   res.success(video);
 };
@@ -66,13 +81,17 @@ export const putVideo = async (req: Request, res: Response) => {
 export const removeVideo = async (req: Request, res: Response) => {
   const uploaderId = req.auth?.userId;
   if (!uploaderId) return res.error("Unauthorized", 401);
-  const video = await deleteVideo(getId(req.params.id), uploaderId);
+  const id = getValidId(req.params.id, res);
+  if (!id) return;
+  const video = await deleteVideo(id, uploaderId);
   if (!video) return res.error("Video not found or forbidden", 404);
   res.success({ deleted: true });
 };
 
 export const getVideoStreamUrl = async (req: Request, res: Response) => {
-  const video = (await getVideoNoIncrement(getId(req.params.id))) as any;
+  const id = getValidId(req.params.id, res);
+  if (!id) return;
+  const video = await getVideoNoIncrement(id, req.auth?.userId);
   if (!video) return res.error("Video not found", 404);
   res.success({ streamUrl: getStreamUrl(video.imageKitPath, video.visibility === "private") });
 };
@@ -84,13 +103,15 @@ export const getRecommendations = async (req: Request, res: Response) => {
 export const getSearch = async (req: Request, res: Response) => {
   const q = typeof req.query.q === "string" ? req.query.q.trim() : "";
   if (!q) return res.success([]);
-  res.success(await searchVideos(q));
+  res.success(await searchVideos(q.slice(0, 100)));
 };
 
 export const postLike = async (req: Request, res: Response) => {
   const clerkId = req.auth?.userId;
   if (!clerkId) return res.error("Unauthorized", 401);
-  const result = await toggleLike(getId(req.params.id), clerkId);
+  const id = getValidId(req.params.id, res);
+  if (!id) return;
+  const result = await toggleLike(id, clerkId);
   if (!result) return res.error("Video or user not found", 404);
   res.success(result);
 };
@@ -98,13 +119,17 @@ export const postLike = async (req: Request, res: Response) => {
 export const postComment = async (req: Request, res: Response) => {
   const clerkId = req.auth?.userId;
   if (!clerkId) return res.error("Unauthorized", 401);
-  const content = z.object({ content: z.string().min(1).max(500) }).parse(req.body).content;
-  const comment = await addComment(getId(req.params.id), clerkId, content);
+  const id = getValidId(req.params.id, res);
+  if (!id) return;
+  const content = z.object({ content: z.string().trim().min(1).max(500) }).parse(req.body).content;
+  const comment = await addComment(id, clerkId, content);
   if (!comment) return res.error("User not found", 404);
   res.success(comment, 201);
 };
 
 export const getComments = async (req: Request, res: Response) => {
+  const id = getValidId(req.params.id, res);
+  if (!id) return;
   const cursor = typeof req.query.cursor === "string" ? req.query.cursor : undefined;
-  res.success(await listComments(getId(req.params.id), cursor));
+  res.success(await listComments(id, cursor));
 };
